@@ -4,10 +4,32 @@ from tqdm import tqdm
 from knn import Knn
 
 
-def load_mnist(root='./', n_samples=6e4):
+def load_mnist(root='./mnist'):
 
     # TODO Load the MNIST dataset
+    # 1. Download the MNIST dataset from
+    #    http://yann.lecun.com/exdb/mnist/
+    # 2. Unzip the MNIST dataset into the
+    #    mnist directory.
+    # 3. Load the MNIST dataset into the
+    #    X_train, y_train, X_test, y_test
+    #    variables.
 
+    # Input:
+    # root: str, the directory of mnist
+
+    # Output:
+    # X_train: np.array, shape (6e4, 28, 28)
+    # y_train: np.array, shape (6e4,)
+    # X_test: np.array, shape (1e4, 28, 28)
+    # y_test: np.array, shape (1e4,)
+
+    # Hint:
+    # 1. Use np.fromfile to load the MNIST dataset(notice offset).
+    # 2. Use np.reshape to reshape the MNIST dataset.
+
+    # YOUR CODE HERE
+    # raise NotImplementedError
     ...
 
     # End of todo

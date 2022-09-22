@@ -19,15 +19,15 @@ Lab assignments for Introduction Course of _Dian.ai_.
 
 ## Changelog
 
-v1.3.0 was released in 2021/10/17.
-* ♻️ Refactor module tests.
-* 🌱 Dian Recruitment Fall 2021
+v1.3.1 was released in 2022/09/22.
+* 📑 Add some hints for lab0.
+* 🌱 Dian Recruitment Fall 2022
 * 🐛 **TODO** Fix the implementation of `Conv2d_im2col`
 * 🚧 **TODO** Module test for `BatchNorm1d`
 
 ## Contributing
 
-Feel free to dive in! [Open an issue](https://github.com/npurson/hello-dian.ai/issues/new) or submit PRs.
+Feel free to dive in! [Open an issue](https://github.com/isfinne/hello-dian.ai/issues/new) or submit PRs.
 
 ## License
 
