@@ -1,7 +1,7 @@
 # Hello, Dian.ai!
 
 ![](https://img.shields.io/badge/organization-Dian.ai-orange)
-![](https://img.shields.io/badge/version-1.3.0-blue)
+![](https://img.shields.io/badge/version-1.3.1-blue)
 ![](https://img.shields.io/badge/license-MIT-blue)
 ![](https://img.shields.io/badge/test-100%-green)
 

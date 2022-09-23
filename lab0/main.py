@@ -48,14 +48,15 @@ def main():
     print('==> acc:', correct / len(X_test))
 
     # plot pred samples
-    fig = plt.subplots(nrows=4, ncols=5, sharex='all',
-                       sharey='all')[1].flatten()
+    fig, ax = plt.subplots(nrows=4, ncols=5, sharex='all', sharey='all')
+    fig.suptitle('Plot predicted samples')
+    ax = ax.flatten()
     for i in range(20):
         img = X_test[i]
-        fig[i].set_title(y_pred[i])
-        fig[i].imshow(img, cmap='Greys', interpolation='nearest')
-    fig[0].set_xticks([])
-    fig[0].set_yticks([])
+        ax[i].set_title(y_pred[i])
+        ax[i].imshow(img, cmap='Greys', interpolation='nearest')
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
     plt.tight_layout()
     plt.show()
 
