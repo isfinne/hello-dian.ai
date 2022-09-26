@@ -1,46 +1,35 @@
+import enum
+from re import X
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from knn import Knn
-
-
-def load_mnist(root='./mnist'):
-
+import os, sys
+dst = sys.argv[0]
+selfPath = os.path.split(dst)[0] + '/'
+def load_mnist(root= selfPath + 'mnist/'):
     # TODO Load the MNIST dataset
-    # 1. Download the MNIST dataset from
-    #    http://yann.lecun.com/exdb/mnist/
-    # 2. Unzip the MNIST dataset into the
-    #    mnist directory.
-    # 3. Load the MNIST dataset into the
-    #    X_train, y_train, X_test, y_test
-    #    variables.
-
-    # Input:
-    # root: str, the directory of mnist
-
-    # Output:
-    # X_train: np.array, shape (6e4, 28, 28)
-    # y_train: np.array, shape (6e4,)
-    # X_test: np.array, shape (1e4, 28, 28)
-    # y_test: np.array, shape (1e4,)
-
-    # Hint:
-    # 1. Use np.fromfile to load the MNIST dataset(notice offset).
-    # 2. Use np.reshape to reshape the MNIST dataset.
-
-    # YOUR CODE HERE
-    # raise NotImplementedError
-    ...
-
+    fileList = os.listdir(root)
+    dataSet = []
+    for fileName in fileList:
+        dataSet.append(np.fromfile(root + fileName, dtype= np.uint8))
+        pass
+    x_train = dataSet[0][16:].reshape(60000, 28, 28)
+    y_train = dataSet[1][8:].reshape(60000)
+    x_test = dataSet[2][16:].reshape(10000, 28, 28)
+    y_test = dataSet[3][8:].reshape(10000)
+    return x_train, y_train, x_test, y_test
     # End of todo
 
 
 def main():
+    #load_mnist()
     X_train, y_train, X_test, y_test = load_mnist()
-
-    knn = Knn()
+    
+    knn = Knn(k = 20)
     knn.fit(X_train, y_train)
     y_pred = knn.predict(X_test)
+    #print(y_pred.shape)
     correct = sum((y_test - y_pred) == 0)
 
     print('==> correct:', correct)
@@ -59,7 +48,7 @@ def main():
     ax[0].set_yticks([])
     plt.tight_layout()
     plt.show()
-
+    
 
 if __name__ == '__main__':
     main()
