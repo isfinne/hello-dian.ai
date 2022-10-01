@@ -58,8 +58,10 @@ class Linear(Module):
             in_length: L_in from expected input shape (N, L_in).
             out_length: L_out from output shape (N, L_out).
         """
-
+        
         # w[0] for bias and w[1:] for weight
+        self.in_length = in_length 
+        self.out_length = out_length
         self.w = tensor.tensor((in_length + 1, out_length))
 
     def forward(self, x):
@@ -73,9 +75,10 @@ class Linear(Module):
 
         # TODO Implement forward propogation
         # of linear module.
-
-        ...
-
+        self.x = x
+        self.length = x.shape[0]
+        self.results = np.dot(x, self.w[1:]) + np.tile(self.w[0], self.length).reshape(-1,1)
+        return self.results
         # End of todo
 
     def backward(self, dy):
@@ -89,11 +92,19 @@ class Linear(Module):
 
         # TODO Implement backward propogation
         # of linear module.
-
-        ...
-
+        derivative = self.w[1:].T
+        dx = np.dot(dy, derivative)
+        
+        weight_grad = np.dot(self.x.T, dy)/1
+        bias_grad = (self.w[0] * np.sum(dy, axis= 0)).reshape(1,self.out_length)/1 #self.length
+        
+        self.w.grad = -np.concatenate((weight_grad, bias_grad))
+        #self.w.grad = np.concatenate((bias_grad, weight_grad))
+        return dx
         # End of todo
 
+
+#what's the following modules about ?? 
 
 class BatchNorm1d(Module):
 

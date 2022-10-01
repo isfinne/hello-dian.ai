@@ -9,9 +9,9 @@ import torch
 
 n_features = 28 * 28
 n_classes = 10
-n_epochs = 10
+n_epochs = 30
 bs = 1000
-lr = 0.000002
+lr = 1e-3
 lengths = (n_features, 512, n_classes)
 
 class Layer(nn.Module):
@@ -45,7 +45,11 @@ class Layer(nn.Module):
         bias_grad = (self.w[0] * np.sum(df, axis= 0)).reshape(1,self.L_out)/self.length #self.length
         self.w.grad = np.concatenate((bias_grad, weight_grad))
         
+        #momentum_sgd(self.x ,df, self.w[1:])
+        self.w = self.w - 0.00001 * self.w.grad
         return dx
+    
+    
     pass
 
 class Model(nn.Module):
@@ -113,14 +117,12 @@ def main():
     trainloader = nn.data.DataLoader(load_mnist('train'), batch=bs)
     testloader = nn.data.DataLoader(load_mnist('test'))
     model = Model(lengths)
-    optimizer = nn.optim.SGD(model, lr=lr, momentum=0.9)
-    #criterion = F.CrossEntropyLoss(n_classes= n_classes)
     criterion = F.CrossEntropyLoss(n_classes= n_classes)
     
-    # Add different layers to the network.
-    model.addLayer(Layer(784, 512, F.ReLU()))
-    model.addLayer(Layer(512, 64, F.ReLU()))
-    model.addLayer(Layer(64, 10, F.ReLU()))
+    #model.addLayer(Layer(784, 100, F.ReLU()))
+    model.addLayer(Layer(784, 128, F.ReLU()))
+    model.addLayer(Layer(128, 256, F.ReLU()))
+    model.addLayer(Layer(256, 10, F.ReLU()))
     
     for i in range(n_epochs):
         bar = tqdm(trainloader, total=6e4 / bs)
@@ -129,7 +131,7 @@ def main():
             probs = model.forward(X)
             loss = criterion(probs, y)
             model.backward(loss.backward())
-            optimizer.step()
+            #optimizer.step()
             preds = np.argmax(probs, axis=1)
             bar.set_postfix_str(f'acc={np.sum(preds == y) / len(y) * 100:.1f}'
                                 ' loss={loss.value:.3f}')

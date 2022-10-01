@@ -17,7 +17,6 @@ def plot_data(X, y):
     plt.scatter(X[y==1, 0], X[y==1, 1], color='blue')
     plt.show()
 
-
 def plot_clf(clf, X, y):
     xx, yy = np.meshgrid(np.linspace(-4, 4, 500), np.linspace(-4, 4, 500))
     xy = np.c_[xx.ravel(), yy.ravel()]
@@ -43,3 +42,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    #a = np.array([1,2,3]).reshape(1,3)
+    #b = np.array([1,2,3]).reshape(1,3)
+    #print(a*b)
