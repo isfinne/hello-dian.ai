@@ -5,13 +5,13 @@ from tqdm import tqdm
 import nn
 import nn.functional as F
 
-import torch
-
 n_features = 28 * 28
 n_classes = 10
 n_epochs = 10
 bs = 1000
-lr = 0.000002
+# lr = 2e-8 for SGD
+# lr = 2e-2 for Adam
+lr = 2e-2
 lengths = (n_features, 512, n_classes)
 
 class Layer(nn.Module):
@@ -20,7 +20,7 @@ class Layer(nn.Module):
         super().__init__()
         self.L_in = L_in
         self.L_out = L_out
-        self.activation = f_activate if f_activate is not None else nn.Module()
+        self.activation = f_activate 
         self.w = np.concatenate((weights, bias)) if weights is not None else nn.tensor.tensor((L_in + 1, L_out))
         self.w.grad = np.zeros_like(self.w)
         pass
@@ -29,18 +29,23 @@ class Layer(nn.Module):
         self.x = x
         self.length = x.shape[0]
         linearResults = np.dot(x, self.w[1:]) + np.tile(self.w[0], self.length).reshape(-1, self.L_out) 
-        activation_output = self.activation.forward(linearResults) 
-        return activation_output if self.activation != None else linearResults
+        try:
+            activation_output = self.activation.forward(linearResults)
+        except AttributeError:
+            activation_output = linearResults 
+        return activation_output
         
     def backward(self, dy: np.ndarray):
         if not isinstance(self.activation, nn.Module):
-            return super().backward(dy)
-        #df = self.activation.backward(dy)
-        df = dy
+            #df = super().backward(dy)
+            pass
+        #else: df = self.activation.backward(dy)
+        else: df = dy
         # linear part output
         derivative = self.w[1:].T
         dx = np.dot(df, derivative)
-        # update the weights and bias
+        
+        # caculate the weights and bias
         weight_grad = np.dot(self.x.T, df)/self.length
         bias_grad = (self.w[0] * np.sum(df, axis= 0)).reshape(1,self.L_out)/self.length #self.length
         self.w.grad = np.concatenate((bias_grad, weight_grad))
@@ -113,14 +118,16 @@ def main():
     trainloader = nn.data.DataLoader(load_mnist('train'), batch=bs)
     testloader = nn.data.DataLoader(load_mnist('test'))
     model = Model(lengths)
-    optimizer = nn.optim.SGD(model, lr=lr, momentum=0.9)
-    #criterion = F.CrossEntropyLoss(n_classes= n_classes)
+    optimizer = nn.optim.Adam(model, lr=lr)
+    #optimizer = nn.optim.SGD(model, lr=lr)
     criterion = F.CrossEntropyLoss(n_classes= n_classes)
     
     # Add different layers to the network.
-    model.addLayer(Layer(784, 512, F.ReLU()))
-    model.addLayer(Layer(512, 64, F.ReLU()))
-    model.addLayer(Layer(64, 10, F.ReLU()))
+    #model.addLayer(Layer(784, 256, F.ReLU()))
+    #model.addLayer(Layer(256, 128, F.ReLU()))
+    #model.addLayer(Layer(128, 64, F.ReLU()))
+    #model.addLayer(Layer(64, 32, F.ReLU()))
+    model.addLayer(Layer(784, 10, F.ReLU()))
     
     for i in range(n_epochs):
         bar = tqdm(trainloader, total=6e4 / bs)
