@@ -62,12 +62,7 @@ class ReLU(Module):
     def backward(self, dy):
         # TODO Implement backward propogation
         # of ReLU function.
-        """
-        grad = np.array(self.x, copy= True)
-        grad[self.x > 0] = 1
-        grad[self.x <= 0 ] = 1e-1
-        return grad * dy (?)
-        """
+        
         derivative = np.array(self.x, copy= True)
         derivative[self.x > 0] = 1
         derivative[self.x <= 0 ] = 1e-2
@@ -164,7 +159,7 @@ class CrossEntropyLoss(Loss):
         partition = np.tile(np.sum(X, axis= 1).reshape(X.shape[0],1), (1,10))
         self.probs = X / partition
         
-        #self.loss = np.sum(-np.log(np.argmax(self.probs)) * self.targets)
+        #self.value = np.sum(-np.log(np.argmax(self.probs)) * self.targets)
         return self
         # End of todo
 

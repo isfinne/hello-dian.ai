@@ -1,5 +1,4 @@
 import numpy as np
-from itertools import product
 from . import tensor
 
 
@@ -77,7 +76,9 @@ class Linear(Module):
         # of linear module.
         self.x = x
         self.length = x.shape[0]
-        self.results = np.dot(x, self.w[1:]) + np.tile(self.w[0], self.length).reshape(-1,1)
+        #self.results = np.dot(x, self.w[1:]) + np.tile(self.w[0], self.length).reshape(-1,1)
+        self.results = np.dot(x, self.w[1:]) + np.tile(self.w[0], self.length).reshape(-1, self.out_length) 
+
         return self.results
         # End of todo
 
@@ -95,12 +96,16 @@ class Linear(Module):
         derivative = self.w[1:].T
         dx = np.dot(dy, derivative)
         
-        weight_grad = np.dot(self.x.T, dy)/1
-        bias_grad = (self.w[0] * np.sum(dy, axis= 0)).reshape(1,self.out_length)/1 #self.length
+        weight_grad = np.dot(self.x.T, dy)
+        #bias_grad = (self.w[0] * np.sum(dy, axis= 0)).reshape(1,self.out_length) #self.length
+        bias_grad = np.sum(dy, axis= 0).reshape(1, self.out_length)
         
-        self.w.grad = -np.concatenate((weight_grad, bias_grad))
+        #weight_grad = np.dot(self.x.T, dy)#/self.length
+        #bias_grad = (self.w[0] * np.sum(dy, axis= 0)).reshape(1, self.out_length)#/self.length
+        
+        self.w.grad = np.concatenate((bias_grad, weight_grad))
         #self.w.grad = np.concatenate((bias_grad, weight_grad))
-        return dx
+        return np.float16(dx)
         # End of todo
 
 
@@ -173,7 +178,15 @@ class Conv2d(Module):
 
         # TODO Initialize the attributes
         # of 2d convolution module.
-
+        self.inShape = in_channels
+        self.outShpae = channels
+        self.kernel_size = kernel_size
+        self.kernel = tensor.tensor((channels, self.kernel_size, self.kernel_size))
+        #self.bias = tensor.tensor((self.kernel_size, self.kernel_size)) if bias else np.zeros((kernel_size, kernel_size))
+        self.bias = tensor.tensor((channels, self.kernel_size, self.kernel_size)) if bias else np.zeros_like(self.kernel)
+        self.stride = stride
+        self.padding = padding
+        
         ...
 
         # End of todo
@@ -186,11 +199,38 @@ class Conv2d(Module):
         Returns:
             out: output of shape (B, C_out, H_out, W_out).
         """
-
+        
+        
         # TODO Implement forward propogation
         # of 2d convolution module.
-
-        ...
+        b, c, h_0, w_0 = x.shape
+        
+        # padding section
+        x_padding = []
+        step = self.padding
+        if step != 0:
+            for image in x:
+                # image.shape: channel * h * w
+                d3_p = np.pad(image, step, 'constant')[step:-step]
+                x_padding.append(d3_p)
+            x_pad = np.array(x_padding).reshape((b, c, h_0+2*step, w_0+2*step))
+        else: x_pad = x
+        
+        b, c, h, w = x_pad.shape
+        n = self.kernel_size
+        ks, stride = self.kernel_size, self.stride
+        H_out = int((h - ks) / stride + 1)                                   
+        W_out = int((w - ks) / stride + 1)     
+        out = np.zeros((n, c, H_out, W_out))
+        for i in range(H_out):
+            for j in range(W_out):
+                temp = x_pad[:,:, i*stride:i*stride+n, j*stride:j*stride+n]
+                #x_masked = x[:, :, i * stride: i * stride + HH, j * stride: j * stride + WW]
+                #out[:, :, i, j] = np.max(x_masked, axis=(2, 3))
+                #for channel in self.kernel:
+                temp = np.multiply(self.kernel, temp)
+                out[i][j] += temp.sum()
+        return out + self.bias
 
         # End of todo
 
@@ -217,8 +257,15 @@ class Conv2d_im2col(Conv2d):
 
         # TODO Implement forward propogation of
         # 2d convolution module using im2col method.
-
-        ...
+        image = x
+        imageCol = []
+        for i in range(0, image.shape[0] - self.ks + 1, self.stride):
+            for j in range(0, image.shape[1] - self.ks + 1, self.stride):
+                col = image[i:i + self.ks, j:j + self.ks, :].reshape([-1])
+                # col = image[:, i:i + self.ks, j:j + self.ks, :].reshape([-1])  # Do not use .view([-1])
+                imageCol.append(col)
+        imageCol = np.array(imageCol)  # shape: [(h*w),(c*h*w)] kernel's height, width and channels
+        return imageCol
 
         # End of todo
 
@@ -237,8 +284,9 @@ class AvgPool(Module):
 
         # TODO Initialize the attributes
         # of average pooling module.
-
-        ...
+        self.ks = kernel_size
+        self.stride = stride
+        self.padding = padding
 
         # End of todo
 
@@ -253,9 +301,30 @@ class AvgPool(Module):
 
         # TODO Implement forward propogation
         # of average pooling module.
-
-        ...
-
+        b, c, h_0, w_0 = x.shape
+        
+        # padding section
+        x_padding = []
+        step = self.padding
+        if step != 0:
+            for image in x:
+                # image.shape: channel * h * w
+                d3_p = np.pad(image, step, 'constant')[step:-step]
+                x_padding.append(d3_p)
+            x_pad = np.array(x_padding).reshape((b, c, h_0+2*step, w_0+2*step))
+        else: x_pad = x
+        
+        b, c, h, w = x_pad.shape
+        out = np.zeros([b, c, h//self.stride, w//self.stride]) 
+        self.index = np.zeros_like(x)
+        for b in range(b):
+            for d in range(c):
+                for i in range(h//self.stride):
+                    for j in range(w//self.stride):
+                        _x = i *self.stride
+                        _y = j *self.stride
+                        out[b, d, i, j] = np.mean((x[b, d, _x:_x+self.ks, _y:_y+self.ks]))
+        return out
         # End of todo
 
     def backward(self, dy):
@@ -270,7 +339,7 @@ class AvgPool(Module):
         # TODO Implement backward propogation
         # of average pooling module.
 
-        ...
+        return np.repeat(np.repeat(dy, self.stride, axis=2), self.stride, axis=3)/(self.ks * self.ks)
 
         # End of todo
 
@@ -289,9 +358,10 @@ class MaxPool(Module):
 
         # TODO Initialize the attributes
         # of maximum pooling module.
-
-        ...
-
+        
+        self.ks = kernel_size
+        self.stride = stride
+        self.padding = padding
         # End of todo
 
     def forward(self, x):
@@ -305,8 +375,33 @@ class MaxPool(Module):
 
         # TODO Implement forward propogation
         # of maximum pooling module.
-
-        ...
+        b, c, h_0, w_0 = x.shape
+        
+        # padding section
+        x_padding = []
+        step = self.padding
+        if step != 0:
+            for image in x:
+                # image.shape: channel * h * w
+                d3_p = np.pad(image, step, 'constant')[step:-step]
+                x_padding.append(d3_p)
+            x_pad = np.array(x_padding).reshape((b, c, h_0+2*step, w_0+2*step))
+        else: x_pad = x
+        
+        b, c, h, w = x_pad.shape
+        out = np.zeros([b, c, h//self.stride, w//self.stride]) 
+        self.index = np.zeros_like(x)
+        for b in range(b):
+            for d in range(c):
+                for i in range(h//self.stride):
+                    for j in range(w//self.stride):
+                        _x = i *self.stride
+                        _y = j *self.stride
+                        out[b, d, i, j] = np.max(x[b, d, _x:_x+self.ks, _y:_y+self.ks])
+                        index = np.argmax(x[b, d, _x:_x+self.ks, _y:_y+self.ks])
+                        self.index[b, d, _x +index//self.ks, _y +index%self.ks ] = 1
+        return out
+        
 
         # End of todo
 
@@ -321,9 +416,7 @@ class MaxPool(Module):
 
         # TODO Implement backward propogation
         # of maximum pooling module.
-
-        ...
-
+        return np.repeat(np.repeat(dy, self.stride, axis=2),self.stride, axis=3)* self.index
         # End of todo
 
 
@@ -358,4 +451,7 @@ class Dropout(Module):
 
 
 if __name__ == '__main__':
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
+    conv = Conv2d()
+    
+    pass

@@ -31,11 +31,11 @@ def main():
     plot_data(X, y)
 
     model = nn.Linear(2, 1)
-    for i in range(20):
+    for i in range(10):
         probs = model(X)
         preds = np.where(probs >= 0, 1, 0)
         model.backward(preds - y.reshape(-1, 1))
-        model.w -= 1e-2 * model.w.grad
+        model.w -= 1 * model.w.grad
         plot_clf(model, X, y)
         print(f'acc: {np.sum(preds == y.reshape(-1, 1)) / len(y):.2f}')
 

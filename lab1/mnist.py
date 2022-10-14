@@ -11,7 +11,7 @@ n_epochs = 10
 bs = 1000
 # lr = 2e-8 for SGD
 # lr = 2e-2 for Adam
-lr = 2e-2
+lr = 3e-2
 lengths = (n_features, 512, n_classes)
 
 class Layer(nn.Module):
@@ -37,7 +37,7 @@ class Layer(nn.Module):
         
     def backward(self, dy: np.ndarray):
         if not isinstance(self.activation, nn.Module):
-            #df = super().backward(dy)
+            df = dy
             pass
         #else: df = self.activation.backward(dy)
         else: df = dy
@@ -47,7 +47,9 @@ class Layer(nn.Module):
         
         # caculate the weights and bias
         weight_grad = np.dot(self.x.T, df)/self.length
-        bias_grad = (self.w[0] * np.sum(df, axis= 0)).reshape(1,self.L_out)/self.length #self.length
+        #bias_grad = (self.w[0] * np.sum(df, axis= 0)).reshape(1,self.L_out)/self.length #self.length
+        bias_grad = np.sum(df, axis= 0).reshape(1, self.L_out)/self.length
+        
         self.w.grad = np.concatenate((bias_grad, weight_grad))
         
         return dx
@@ -123,11 +125,16 @@ def main():
     criterion = F.CrossEntropyLoss(n_classes= n_classes)
     
     # Add different layers to the network.
-    #model.addLayer(Layer(784, 256, F.ReLU()))
-    #model.addLayer(Layer(256, 128, F.ReLU()))
-    #model.addLayer(Layer(128, 64, F.ReLU()))
-    #model.addLayer(Layer(64, 32, F.ReLU()))
-    model.addLayer(Layer(784, 10, F.ReLU()))
+    model.addLayer(Layer(784, 256))
+    model.addLayer(F.ReLU())
+    model.addLayer(Layer(256, 128))
+    model.addLayer(F.ReLU())
+    model.addLayer(Layer(128, 64))
+    model.addLayer(F.ReLU())
+    model.addLayer(Layer(64, 32))
+    model.addLayer(F.ReLU())
+    model.addLayer(Layer(32, 10, F.ReLU()))
+    
     
     for i in range(n_epochs):
         bar = tqdm(trainloader, total=6e4 / bs)

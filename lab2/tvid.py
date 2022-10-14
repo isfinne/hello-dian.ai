@@ -35,16 +35,23 @@ class TvidDataset(data.Dataset):
         self.getDataSet()
     
     def getDataSet(self):
-        toTensor = transforms.ToTensor()
+        import tqdm
+        # resizer is too slow ?
+        resizer = transforms.RandomResize(64, 256)
         loader = transforms.LoadImage()
+        
+        normalizer = transforms.Normalize( mean=[0.5] * 3, std=[0.5] * 3)
         filper = transforms.RandomHorizontalFlip()
         croper = transforms.RandomCrop((128, 128))
+        
+        toTensor = transforms.ToTensor()
         keys = self.labels.keys()
         _classDict = {k :v for k,v in zip(keys, range(5))}
         self.dataSet = []
         for class_ in keys:
             imageNameList = self.images[class_]
             labelsList = self.labels[class_]
+            pbar = tqdm.tqdm(range( *self.Range_ ))
             for index in range( *self.Range_ ):
                 imagePath = self.root + class_ + '/' + imageNameList[index]
                 label = list(map(lambda x: int(x), labelsList[index].split(' ')[1:]))
@@ -52,9 +59,16 @@ class TvidDataset(data.Dataset):
                 image, bbox = loader(imagePath, label)
                 if self.train:
                     image, bbox = filper(image, bbox)
+                    #image, bbox = resizer(image, bbox)
                     image, bbox = croper(image, bbox)
-                image, bbox = toTensor(image, bbox)
+                    image = transforms.pad_if_smaller(image, 128)
+                    image, bbox = toTensor(image, bbox)
+                    image, bbox = normalizer(image, bbox)
+                else:
+                    image, bbox = toTensor(image, bbox)
                 self.dataSet.append((image, bbox, torch.tensor(_classDict[class_])))
+                pbar.update(1)
+                
                 pass
             pass
         return self.dataSet

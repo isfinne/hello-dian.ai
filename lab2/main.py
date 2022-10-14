@@ -11,12 +11,12 @@ from torch.utils import data
 from tqdm import tqdm
 from tvid import TvidDataset
 from detector import Detector
-from utils import compute_iou, compute_iou_refer
+from utils import compute_iou
 
 #lr = 5e-3
 lr = 6e-3
 #batch = 32
-batch = 32
+batch = 16
 epochs = 100
 device = "cuda" if torch.cuda.is_available() else "cpu"
 #print(device)
@@ -40,7 +40,9 @@ def train_epoch(model, dataloader, criterion: dict, optimizer,
         class_probs, bbox_pred = model.forward(X)
         #loss = criterion['cls'](class_probs, class_.long()) + 0.2*criterion['box'](bbox_pred, y) 
         #loss = 1.2*criterion['cls'](class_probs, class_.long()) + 0.25*criterion['box'](bbox_pred, y) 
-        loss = 0.3*criterion['box'](bbox_pred, y) + 2.4*criterion['cls'](class_probs, class_)
+        
+        loss = 0.3*criterion['box'](bbox_pred, y) + 2.7*criterion['cls'](class_probs, class_)
+        #loss = 2.7*criterion['cls'](class_probs, class_)
         
         loss.backward()
         optimizer.step()
