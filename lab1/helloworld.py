@@ -17,7 +17,6 @@ def plot_data(X, y):
     plt.scatter(X[y==1, 0], X[y==1, 1], color='blue')
     plt.show()
 
-
 def plot_clf(clf, X, y):
     xx, yy = np.meshgrid(np.linspace(-4, 4, 500), np.linspace(-4, 4, 500))
     xy = np.c_[xx.ravel(), yy.ravel()]
@@ -32,14 +31,17 @@ def main():
     plot_data(X, y)
 
     model = nn.Linear(2, 1)
-    for i in range(20):
+    for i in range(10):
         probs = model(X)
         preds = np.where(probs >= 0, 1, 0)
         model.backward(preds - y.reshape(-1, 1))
-        model.w -= 1e-2 * model.w.grad
+        model.w -= 1 * model.w.grad
         plot_clf(model, X, y)
         print(f'acc: {np.sum(preds == y.reshape(-1, 1)) / len(y):.2f}')
 
 
 if __name__ == '__main__':
     main()
+    #a = np.array([1,2,3]).reshape(1,3)
+    #b = np.array([1,2,3]).reshape(1,3)
+    #print(a*b)
